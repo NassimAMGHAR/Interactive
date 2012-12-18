@@ -1,0 +1,662 @@
+////////////////////////////////
+// 2008			      // /* AMGHAR Nassim m1*/
+// TD Animation 3D            //
+// Université Paris 11	      //  
+// Mehdi AMMI - ammi@limsi.fr //
+////////////////////////////////
+
+#include <GL/glut.h>    // Header pour GLUT 
+#include <GL/gl.h>	// Header pour OpenGL
+#include <GL/glu.h>	// Header pour GLu
+#include <stdlib.h>     // Heard  Utilitaire général
+#include <stdio.h>      // Header pour les fonctions entrées/sorties
+#include <math.h>       // Header pour les fonctions mathèmatiques
+#include "TD_Animation_3D.h"
+
+
+/* code ASCII pour la touche escape*/
+#define ESCAPE 27
+
+float last_x;
+float u_last_z ;
+float l_last_z ;
+/* Idantifiant de la fenêtre GLUT */
+int window; 
+
+/* Fonction d'initialisation */
+void InitGL(int Width, int Height)	        
+{
+// Couleur d'effacement du buffer de couleur
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);		
+
+// paramètrage du Z-buffer
+  glClearDepth(1.0);	
+  glDepthFunc(GL_LESS);	
+  glEnable(GL_DEPTH_TEST);	
+
+
+// Activation du lissage
+  glShadeModel(GL_SMOOTH);			
+
+// Projection perceptive
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();				
+
+// Projection orthogonale sans aspect ratio
+  glOrtho(0.0f,(GLfloat)Width,0.0f,(GLfloat)Height,-25,25);  
+
+  glMatrixMode(GL_MODELVIEW);
+
+// Compilation des lists des objets crées : axex, segments, etc.
+  Objects_List();
+
+
+// Initialisation du système cinématique
+  InitBonesystem();
+
+
+// Intialisation de sequence d'animation
+
+  Init_Keyframing();
+
+}
+
+/* Fonction de redimensionnement de la fenêtre */
+void ReSizeGLScene(int Width, int Height)
+{
+
+  glViewport(0, 0, Width, Height);		
+
+// Projection perceptive
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();				
+
+
+// Projection orthogonale avec aspect ratio
+  glOrtho(0.0f,(GLfloat)Width,0.0f,(GLfloat)Height,-25,25); 
+
+
+// Sauvegarde (variables globales) de la taille de la fenêtre
+  m_Width = Width;
+  m_Height = Height;
+
+
+// Retour à la modélisation
+  glMatrixMode(GL_MODELVIEW);
+
+}
+
+/* Focntion de dessin */
+void DrawGLScene()
+{
+// Effacement du buffer de couleur et de profondeur
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
+  glLoadIdentity();		
+
+
+// Dessin du robot
+//..
+	int i;
+	const int NumKeys = ((double)sizeof(TabKey))/((double)sizeof(Key));
+
+	glPointSize(10);
+	glBegin(GL_POINTS);
+	glColor3f(0.5,0.6,0.5);
+	for(i=0;i<NumKeys;i++)
+	glVertex2f(TabKey[i].pos.x,m_Height - TabKey[i].pos.y -1);	
+	glEnd();
+
+  glPushMatrix();
+
+// UpArm
+//..  
+    
+	glTranslatef(m_UpArm.pos.x,m_UpArm.pos.y,m_UpArm.pos.z);
+ 	glRotatef(m_UpArm.rot.z,0.0,0.0,1.0);
+
+  glCallList(UpArm_DLIST);
+  glCallList(AXIS_DLIST);
+// LowArm
+//..
+	
+	glTranslatef(m_LowArm.pos.x,m_LowArm.pos.y,m_LowArm.pos.z); 	
+	glRotatef(m_LowArm.rot.z,0.0,0.0,1.0);
+   
+   glCallList(LowArm_DLIST);
+   glCallList(AXIS_DLIST);
+
+	glTranslatef(m_Effector.pos.x, m_Effector.pos.y, m_Effector.pos.z);
+   glCallList(AXIS_DLIST);
+
+  glPopMatrix();
+
+
+// Dessin des Keyframes
+//..
+
+
+  // Permutation des buffers
+  glutSwapBuffers();
+}
+
+/* Fonction de gestion du clavier */
+void keyPressed(unsigned char key, int x, int y) 
+{
+
+    if (key == ESCAPE) 
+    {
+	/* Eteindre la fenêtre */
+	glutDestroyWindow(window); 
+
+	/* Sortire du programme */
+	exit(0);                   
+    }
+}
+
+
+// Fonction de sauvegarde des états de la souris et du système cinématique au moment du clique
+void processMouse(int button, int state, int x, int y)
+{
+	// Sauvegarde du bouton (droit, gauche, milieu)
+	m_boutton = button;
+
+	// Sauvegarde de la position de la souris et de l'orientation des segment pour la gestion continue des angles
+	//..
+}
+
+
+// Fonction d'interaction : choix de l'opération à faire (cinématique directe / inverse)
+void processMouseActiveMotion(int x, int y)
+{
+		
+	switch (m_boutton)
+	{
+
+// Cinématique inverse
+	case GLUT_LEFT_BUTTON : // Manipulation par cinématique inverse
+
+		//..
+		if (ComputeIK(x,y)) ;
+		break;
+
+
+
+
+
+// Cinématique directe
+	case GLUT_MIDDLE_BUTTON : // Manipulation directe du segment UpArm
+
+		//..
+		m_UpArm.rot.z =  u_last_z + ((float)ROTATE_SPEED * (last_x - x));
+		
+		break;
+
+	case GLUT_RIGHT_BUTTON : // Manipulation durecte du segment LowArm
+		
+		//..
+		m_LowArm.rot.z =  l_last_z + ((float)ROTATE_SPEED * (last_x - x));
+	
+		break;
+	}
+
+	last_x = x;
+	u_last_z = m_UpArm.rot.z;
+	l_last_z = m_LowArm.rot.z;
+  glutPostRedisplay();
+}
+
+
+
+int main(int argc, char **argv) 
+{
+  /* Initialize GLUT state - glut will take any command line arguments that pertain to it or 
+     X Windows - look at its documentation at http://reality->sgi.com/mjk/spec3/spec3.html */  
+  glutInit(&argc, argv);
+
+  /*  Activation des buffers :   
+     Double buffer 
+     RGBA color
+     Alpha
+     Depth buffer */  
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);  
+
+  /* Création de la fenêtre */
+  glutInitWindowSize(800, 600);  
+
+  /* Positionnement de la fenêtre */
+  glutInitWindowPosition(200, 200);  
+
+  /* Ouverture de la fenêtre */  
+  window = glutCreateWindow("TD Animation 3D");  
+
+  /* Spécification de la fontion de dessin */
+  glutDisplayFunc(&DrawGLScene);  
+
+  /* Spécification de la fontion de redimensionnement */
+  glutReshapeFunc(&ReSizeGLScene);
+
+  /* Spécification de la fontion de  gestion du clavier */
+  glutKeyboardFunc(&keyPressed);
+
+  /* Spécification de la fontion de la souris : boutons appuyés */
+  glutMouseFunc(processMouse);
+
+  /* Spécification de la fontion de la souris : boutons appuyés avec mouvement */
+  glutMotionFunc(processMouseActiveMotion);
+
+  /* Spécification de la fontion gestion de l'animation */
+  glutIdleFunc(Idle);
+
+  /* Intitialisation des paramètres de l'affichage et de la fenêtre */
+  InitGL(800, 600);
+  
+  /* Lancement de la boucle OpenGL */  
+  glutMainLoop();  
+
+  return 1;
+}
+
+
+
+
+
+// Listes des objets à dessiner
+void Objects_List()
+{
+
+// Liste Axes
+glNewList(AXIS_DLIST,GL_COMPILE);
+
+	glPushMatrix();
+	glTranslatef(0.0,0.0,1.0);
+	glScalef(200.0,200.0,200.0);
+
+	glBegin(GL_LINES);
+		glColor3f(1.0f, 0.0f, 0.0f);	
+		glVertex3f(-0.2f,  0.0f, 0.0f);
+		glVertex3f( 0.2f,  0.0f, 0.0f);
+		glVertex3f( 0.2f,  0.0f, 0.0f);	
+		glVertex3f( 0.15f,  0.04f, 0.0f);
+		glVertex3f( 0.2f,  0.0f, 0.0f);	
+		glVertex3f( 0.15f, -0.04f, 0.0f);
+		glColor3f(0.0f, 1.0f, 0.0f);	
+		glVertex3f( 0.0f,  0.2f, 0.0f);
+		glVertex3f( 0.0f, -0.2f, 0.0f);			
+		glVertex3f( 0.0f,  0.2f, 0.0f);	
+		glVertex3f( 0.04f,  0.15f, 0.0f);
+		glVertex3f( 0.0f,  0.2f, 0.0f);	
+		glVertex3f( -0.04f,  0.15f, 0.0f);
+		glColor3f(0.0f, 0.0f, 1.0f);	
+		glVertex3f( 0.0f,  0.0f,  0.2f);
+		glVertex3f( 0.0f,  0.0f, -0.2f);
+		glVertex3f( 0.0f,  0.0f, 0.2f);	
+		glVertex3f( 0.0f,  0.04f, 0.15f);
+		glVertex3f( 0.0f, 0.0f, 0.2f);	
+		glVertex3f( 0.0f, -0.04f, 0.15f);
+	glEnd();
+	glPopMatrix();
+
+glEndList();
+
+
+// Liste UpArm
+glNewList(UpArm_DLIST,GL_COMPILE);
+
+	glPushMatrix();
+
+		glTranslatef(UpArm_Length/2.0,0.0,0.0);
+		glScalef(UpArm_Length,Arm_Width ,1.0);
+		glColor3f(0.6,0.6,0.6);
+		glutSolidCube(1.0);
+
+	glPopMatrix();
+
+glEndList();
+
+
+// Liste LowArm
+glNewList(LowArm_DLIST,GL_COMPILE);
+	
+	glPushMatrix();
+
+		glTranslatef(LowArm_Length/2.0,0.0,0.0);
+		glScalef(LowArm_Length,Arm_Width ,1.0);
+		glColor3f(0.8,0.8,0.8);
+		glutSolidCube(1.0);
+
+	glPopMatrix();
+
+glEndList();
+
+}
+
+// Fonction d'initilisation du système cinématique
+void ResetBone(t_Bone *bone, float ox, float oy, float oz, float tx, float ty, float tz)
+{
+
+//..
+ bone->pos.x = tx ; 
+ bone->pos.y = ty ;
+ bone->pos.z = tz ;
+ bone->rot.x = ox ;
+ bone->rot.y = oy ;
+ bone->rot.z = oz ;
+}
+
+
+// Initilisation du système cinématique
+void InitBonesystem()
+{
+//m_Body,
+//..
+ ResetBone(&m_UpArm,0.0,0.0,5.0,50.0,100.0,0.0);
+ ResetBone(&m_LowArm,0.0,0.0,10.0,UpArm_Length,0.0,0.0);
+ ResetBone(&m_Effector,0.0,0.0,0.0,LowArm_Length,0.0,0.0);
+}
+
+
+// Fonction de calcul de la cinématique inverse : Résultat vrais ou faux en fonction de l'objectif donnée (accessible ou non)
+int ComputeIK(int x, int y)
+{
+/// Variables locales
+  float ex,ey;		// Vecteur déplacement
+  float sin2,cos2;	// SINE ry COSINE de l'ANGLE 2
+  float angle1,angle2;  // ANGLE 1 et 2 en RADIANS
+  float tan1;		// TAN de ANGLE 1
+
+
+// Changement de repère (inversion de l'axe Y)
+  y = m_Height - y - 1;
+
+//..
+  ex = x -  m_UpArm.pos.x;
+  ey = y -  m_UpArm.pos.y;
+   
+  cos2 = (pow(ex,2) + pow(ey,2) - pow(UpArm_Length,2) - pow(LowArm_Length,2) )/ (2*UpArm_Length*LowArm_Length);
+  
+  if (cos2 >1 && cos2 <-1) return 0; 
+	
+  angle2 = acos (cos2);
+
+  sin2 = sin (angle2);
+
+  tan1 = (-(LowArm_Length*sin2*ex) + ((UpArm_Length+(LowArm_Length * cos2))*ey) ) / ((LowArm_Length*sin2*ey) + (UpArm_Length+(LowArm_Length*cos2))*ex);
+
+  angle1 = atan (tan1);
+	
+  m_UpArm.rot.z = RADTODEG(angle1);
+
+  m_LowArm.rot.z = RADTODEG(angle2);	
+  return 1;	
+}
+
+
+// Fonction gérant le Keyframing
+void Idle()
+{
+
+// Incrémentation de la varaible temps (si l'animation et trop rapide diminuer le pas d'incrémentation)
+  time+=1.5; 
+// Variables intérmédiares entre la fonction de Keyframing et la fonction de cinématique inverse
+  int X,Y,Z;
+
+// Intérpolation linéaire
+//..
+  //SolveLinear(time,&X,&Y,&Z);
+  //ComputeIK(X,Y);	
+// Interpolation Hermite
+// ..
+  SolveTCB ( time, &X, &Y, &Z);
+  ComputeIK(X,Y);
+//..
+  glutPostRedisplay();
+}
+
+
+void Init_Keyframing()
+{
+
+// vairialbe temps
+time = 0;
+
+// Paramètes de l'interpolation
+float tension = 0.0;
+float continuity = 0.0;
+float bias = 0.0;
+
+// Keyframe 1
+//..
+	TabKey[0].t = 0;
+	TabKey[0].pos.x = 50;
+	TabKey[0].pos.y = 50;
+	TabKey[0].pos.z = 0;
+	TabKey[0].bias = bias;
+	TabKey[0].continuity = continuity;
+	TabKey[0].tension = tension;
+	
+// Keyframe 2
+//..
+	
+	TabKey[1].t = 100;
+	TabKey[1].pos.x = 300;
+	TabKey[1].pos.y = 70;
+	TabKey[1].pos.z = 0;
+	TabKey[1].bias = bias;
+	TabKey[1].continuity = continuity;
+	TabKey[1].tension = tension;
+	
+// Keyframe 3
+//..
+	
+	TabKey[2].t = 200;
+	TabKey[2].pos.x = 450;
+	TabKey[2].pos.y = 400;
+	TabKey[2].pos.z = 0;
+	TabKey[2].bias = bias;
+	TabKey[2].continuity = continuity;
+	TabKey[2].tension = tension;
+	
+// Keyframe 4
+//..
+	
+	TabKey[3].t = 400;
+	TabKey[3].pos.x = 50;
+	TabKey[3].pos.y = 250;
+	TabKey[3].pos.z = 0;
+	TabKey[3].bias = bias;
+	TabKey[3].continuity = continuity;
+	TabKey[3].tension = tension;
+	
+// Keyframe 5
+//..
+	
+	TabKey[4].t = 500;
+	TabKey[4].pos.x = 50;
+	TabKey[4].pos.y = 50;
+	TabKey[4].pos.z = 0;
+	TabKey[4].bias = bias;
+	TabKey[4].continuity = continuity;
+	TabKey[4].tension = tension;
+	
+}
+
+
+void Draw_animation_sequence()
+{
+
+//..
+
+}
+
+// Fonction d'intérpolation linéaire
+void SolveLinear(float t, int *x, int *y, int *z)
+{
+
+// Déclaration des Keyframes utilisés
+Key* CurKey, *NextKey;
+
+// Varaible d'incrémentation
+int i ;
+
+// Taille du tableau de Keyframe
+const int NumKeys = ((double)sizeof(TabKey))/((double)sizeof(Key));//TabKey->Count();
+const int NumKeysMinusOne = NumKeys-1;
+
+
+// Boucle de parcours des Keyframes
+//..
+float u;
+for(i = 0; i < NumKeys;i++)
+{
+	NextKey = &TabKey[i];
+	if (t<NextKey->t){
+		if (i==0)
+		CurKey = &TabKey[NumKeysMinusOne];		
+		else
+		CurKey = &TabKey[i-1];	
+		u = (t - CurKey->t)/(NextKey->t - CurKey->t);
+		*x = (CurKey->pos.x) + u*(NextKey->pos.x - CurKey->pos.x) ;
+		*y = (CurKey->pos.y) + u*(NextKey->pos.y - CurKey->pos.y) ;//(1-u)*(CurKey->pos.y) + u*(NextKey->pos.y) ;
+		*z = (CurKey->pos.z) + u*(NextKey->pos.z - CurKey->pos.z) ;	
+	 		
+	//break;
+	return;	
+	}
+}
+ time = 0;
+}
+
+
+//Fonction H0 : H0 = 2t3 - 3t2 + 1
+float H0(float t)
+{
+        //..
+	// do the same as the one insolvelineair // name m1 //name m1.cpp & hpp
+	return (2*(t*t*t) - 3*(t*t*t) +1);
+}
+
+//Fonction H1 : H1 = -2t3 + 3t2
+float H1(float t)
+{
+        //..
+	return (-2*(t*t*t) + 3*(t*t));
+	
+}
+
+//Fonction H2 : H2 = t3 - 2t2 +t 
+float H2(float t)
+{
+        //..
+	return ((t*t*t) - 2*(t*t) +t);
+}
+
+//Fonction H3 : H3 = t3 - t2
+float H3(float t)
+{
+       //..
+	return ((t*t*t) - (t*t) );
+}
+
+
+
+// Fonction d'intérpolation Hermite
+void SolveTCB ( float t, int *x, int *y, int *z)
+{
+// Déclaration des Keyframes utilisés
+Key *NextKey, *NextNextKey, *CurKey, *PrevKey;
+
+// Varaible d'incrémentation
+int i;
+
+// Taille du tableau de Keyframe
+const int NumKeys = ((double)sizeof(TabKey))/((double)sizeof(Key));
+const int NumKeysMinusOne = NumKeys-1;
+
+
+// Boucle de parcours des Keyframes
+//..
+
+for(i = 0; i < NumKeys;i++)
+{
+	NextKey = &TabKey[i];
+	if (t<NextKey->t){
+		
+		if(i==0) {
+			CurKey = &TabKey[NumKeysMinusOne];
+			PrevKey = &TabKey[NumKeysMinusOne-1];	
+			NextNextKey = &TabKey[1];	
+			}
+				
+		else if(i==1){
+			CurKey = &TabKey[0];
+			PrevKey = &TabKey[NumKeysMinusOne];	
+			NextNextKey = &TabKey[2];	
+			}
+
+		else if(i==NumKeysMinusOne){
+			CurKey = &TabKey[i-1];
+			PrevKey = &TabKey[i-2];	
+			NextNextKey = &TabKey[0];	
+			}
+
+		else   {
+			CurKey = &TabKey[i-1];	
+			PrevKey = &TabKey[i-2];	
+			NextNextKey = &TabKey[i+1];
+			}
+		
+		// calcul tangents	
+			//curent
+			float u = ((t-CurKey->t) / (NextKey->t - CurKey->t));
+			float ctx,cty,ctz;
+			float ntx,nty,ntz;
+			
+			ctx  = Tn(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.x,CurKey->pos.x);
+			cty  = Tn(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.y,CurKey->pos.y);
+			ctz  = Tn(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.z,CurKey->pos.z);
+
+			//printf("ctx -- > %lf \n",ctx);
+			
+			//next
+			ntx  = Tn1(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.x,CurKey->pos.x,NextKey->pos.x,NextNextKey->pos.x);
+			nty  = Tn1(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.y,CurKey->pos.y,NextKey->pos.y,NextNextKey->pos.y);
+			ntz  = Tn1(CurKey->tension,CurKey->bias,CurKey->continuity,PrevKey->pos.z,CurKey->pos.z,NextKey->pos.z,NextNextKey->pos.z);
+
+			//printf(" ntx -- > %lf \n",ntx);
+			
+
+		// mise a jour des positions
+			*x = (int) (H0(u)*CurKey->pos.x + H1(u)*NextKey->pos.x + H2(u)*ctx + H3(u)*ntx);
+			*y = (int) (H0(u)*CurKey->pos.y + H1(u)*NextKey->pos.y + H2(u)*cty + H3(u)*nty);
+			*z = (int) (H0(u)*CurKey->pos.z + H1(u)*NextKey->pos.z + H2(u)*ctz + H3(u)*ntz);
+			printf("\n%lf\n",( CurKey->pos.x ));
+			printf("\n%lf, %lf\n",H1(t),( NextKey->pos.x ));
+			printf("\n%lf\n",( H2(t)*CurKey->tension ));				
+			printf("\n%lf\n",( H3(t)*NextKey->tension ));
+	 		//printf(" time -> %f X -- > %d \n",t,*x);
+			//printf(" H0(t) = %f , H1(t) = %f , H2(t) = %f , H3(t) = %f \n",H0(t),H1(t),H2(t),H3(t));
+			//if(*x < (-8000) || *x > 8000)
+			//exit(0);
+	//break;
+	return;	
+	}
+}
+ time = 0;
+ return;
+
+
+}
+
+
+float Tn(float t,float b,float c,float prev,float cur)
+{
+	float temp = (((1-t)*(1+b)*(1-c))*0.5)*(cur-prev)  + (((1-t)*(1-b)*(1+c))*0.5)* (prev - cur);
+	return temp;	
+}
+
+float Tn1(float t,float b,float c,float prev ,float cur,float next,float next2)
+{
+	float temp = (((1-t)*(1+b)*(1+c))*0.5)*(prev-cur)  + (((1-t)*(1-b)*(1-c))*0.5)*(next2 - next);	
+	return temp; 	
+}
+

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="OpenGL/DemoApplication.cpp" open="0" top="0" tabpos="4">
+		<Cursor position="13282" topLine="749" />
+	</File>
+	<File name="OpenGL/DemoApplication.h" open="0" top="0" tabpos="5">
+		<Cursor position="3752" topLine="153" />
+	</File>
+	<File name="PendulumApplication.cpp" open="1" top="1" tabpos="2">
+		<Cursor position="6767" topLine="38" />
+	</File>
+	<File name="PendulumApplication.h" open="1" top="0" tabpos="1">
+		<Cursor position="1651" topLine="27" />
+	</File>
+	<File name="RagDoll.h" open="0" top="0" tabpos="6">
+		<Cursor position="523" topLine="12" />
+	</File>
+	<File name="main.cpp" open="0" top="0" tabpos="1">
+		<Cursor position="0" topLine="0" />
+	</File>
+</CodeBlocks_layout_file>

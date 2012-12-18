@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="pendule" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/pendule" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="/usr/include/bullet" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/pendule" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add directory="/usr/include/bullet" />
+			<Add directory="OpenGL" />
+		</Compiler>
+		<Linker>
+			<Add library="/usr/lib/libBulletCollision.so" />
+			<Add library="/usr/lib/libBulletDynamics.so" />
+			<Add library="/usr/lib/libBulletSoftBody.so" />
+			<Add library="/usr/lib/libLinearMath.so" />
+			<Add library="/usr/lib/libGL.so" />
+			<Add library="/usr/lib/libGLU.so" />
+			<Add library="/usr/lib/libglut.so" />
+		</Linker>
+		<Unit filename="OpenGL/CommandLineArguments.h" />
+		<Unit filename="OpenGL/DebugCastResult.h" />
+		<Unit filename="OpenGL/DemoApplication.cpp" />
+		<Unit filename="OpenGL/DemoApplication.h" />
+		<Unit filename="OpenGL/GLDebugDrawer.cpp" />
+		<Unit filename="OpenGL/GLDebugDrawer.h" />
+		<Unit filename="OpenGL/GLDebugFont.cpp" />
+		<Unit filename="OpenGL/GLDebugFont.h" />
+		<Unit filename="OpenGL/GL_DialogDynamicsWorld.cpp" />
+		<Unit filename="OpenGL/GL_DialogDynamicsWorld.h" />
+		<Unit filename="OpenGL/GL_DialogWindow.cpp" />
+		<Unit filename="OpenGL/GL_DialogWindow.h" />
+		<Unit filename="OpenGL/GL_ShapeDrawer.cpp" />
+		<Unit filename="OpenGL/GL_ShapeDrawer.h" />
+		<Unit filename="OpenGL/GL_Simplex1to4.cpp" />
+		<Unit filename="OpenGL/GL_Simplex1to4.h" />
+		<Unit filename="OpenGL/GlutDemoApplication.cpp" />
+		<Unit filename="OpenGL/GlutDemoApplication.h" />
+		<Unit filename="OpenGL/GlutStuff.cpp" />
+		<Unit filename="OpenGL/GlutStuff.h" />
+		<Unit filename="OpenGL/RenderTexture.cpp" />
+		<Unit filename="OpenGL/RenderTexture.h" />
+		<Unit filename="OpenGL/Win32AppMain.cpp" />
+		<Unit filename="OpenGL/Win32DemoApplication.cpp" />
+		<Unit filename="OpenGL/Win32DemoApplication.h" />
+		<Unit filename="OpenGL/stb_image.cpp" />
+		<Unit filename="OpenGL/stb_image.h" />
+		<Unit filename="PendulumApplication.cpp" />
+		<Unit filename="PendulumApplication.h" />
+		<Unit filename="RagDoll.cpp" />
+		<Unit filename="RagDoll.h" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
